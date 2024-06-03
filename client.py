@@ -9,7 +9,7 @@ ADDR = (SERVER, PORT)
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(ADDR)
-
+connected = True
 def send(msg):
     message = msg.encode(FORMAT)
     msg_length = len(message)
@@ -18,10 +18,6 @@ def send(msg):
     client.send(send_length)
     client.send(message)
     print(client.recv(2048).decode(FORMAT))
-
-send("Hello World!")
-input()
-send("Hello Everyone!")
-input()
-send("Hello Mike!")
-send(DISCONNECT_MESSAGE)
+while connected:
+    msg = input("")
+    send(msg)
