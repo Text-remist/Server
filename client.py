@@ -11,6 +11,7 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 SERVER = "192.165.145.1"
 ADDR = (SERVER, PORT)
 connected = False
+connected_clients = {}
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -38,9 +39,9 @@ def start():
             if msg != DISCONNECT_MESSAGE:
                 data = json.loads(msg)
                 print("[CLIENT] Server Data Received")
-                print(data)
                 data['age'] = random.randint(0, 15)
-                print(data)
+                print("[CLIENT] New Data:", data)
+
                 age_update_msg = {'age_update': data['age']}
                 client.send(json.dumps(age_update_msg).encode(FORMAT))
                 print("[CLIENT] Server Data Sent\n")
