@@ -1,20 +1,23 @@
 import socket
 import threading
 import json
-
-data =  '{ "name":"John", "age":30, "city":"New York"}'
-json_data = json.loads(data)
+import time
+from pyfiglet import Figlet
+data = '{"name":"John", "age":30, "city":"New York"}'
 HEADER = 64
 PORT = 5050
-SERVER = socket.gethostbyname(socket.gethostname())
+SERVER = "192.165.145.1"
 ADDR = (SERVER, PORT)
 BLOCKEDLST = json.load(open("blocked.json"))
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"
+
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
-global running
+
 def handle_client(conn, addr):
+    global data
+    json_data = json.loads(data)
     connected = True
     blocked = False
     for blocked_address in BLOCKEDLST:
@@ -24,12 +27,16 @@ def handle_client(conn, addr):
     if connected and not blocked:
         print(f"[NEW CONNECTION] {addr}\n")
         while connected:
+            time.sleep(0.01)
             try:
-                sent = f"{json_data}"
+                sent = json.dumps(json_data)
                 conn.send(sent.encode(FORMAT))
-                received = conn.recv(500000).decode(FORMAT)
+                received = conn.recv(HEADER).decode(FORMAT)
                 if received != DISCONNECT_MESSAGE:
                     received = json.loads(received)
+                    if 'age_update' in received:
+                        age = received['age_update']
+                        json_data["age"] = int(age)
                 else:
                     print(f"[CLIENT] {addr} DISCONNECTED")
                     connected = False
@@ -42,22 +49,21 @@ def handle_client(conn, addr):
         conn.send(DISCONNECT_MESSAGE.encode(FORMAT))
         connected = False
         conn.close()
+
 def shutdown():
-    global running
     print("\n[SERVER] DISCONNECTING CLIENT FROM SERVER\n")
-    running = False
-    server.close()  # Close the server socket
+    server.close()
 
 def start():
-    running = True
     server.listen()
     print(f"[SERVER] SERVER RUNNING ON {SERVER}")
-    while running:
+    while True:
         conn, addr = server.accept()
-
         thread = threading.Thread(target=handle_client, args=(conn, addr))
         thread.start()
         print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
 
+f = Figlet(font='slant')
+print(f.renderText('Game Server'))
 print("[SERVER] SERVER IS STARTING")
 start()

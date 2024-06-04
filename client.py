@@ -29,12 +29,15 @@ def start():
     def disconnect():
         global connected
         print("[CLIENT] DISCONNECTING FROM SERVER\n")
-        client.send(DISCONNECT_MESSAGE.encode(FORMAT))
+        try:
+            client.send(DISCONNECT_MESSAGE.encode(FORMAT))
+        except Exception:
+            print("[CLIENT] SERVER CONNECTION FAILED")
         connected = False
 
     while connected:
+        time.sleep(0.01)
         try:
-            time.sleep(0.5)
             msg = client.recv(HEADER).decode(FORMAT)
             if msg != DISCONNECT_MESSAGE:
                 data = json.loads(msg)
@@ -43,6 +46,7 @@ def start():
                 print("[CLIENT] New Data:", data)
 
                 age_update_msg = {'age_update': data['age']}
+
                 client.send(json.dumps(age_update_msg).encode(FORMAT))
                 print("[CLIENT] Server Data Sent\n")
             else:
@@ -53,6 +57,12 @@ def start():
         except json.JSONDecodeError as e:
             print(f"Failed to decode JSON: {e}")
             return 0
+        except WindowsError:
+            connected = False
+            disconnect()
+        except ConnectionResetError:
+            connected = False
+            disconnect()
         except Exception as e:
             print(f"An error occurred: {e}")
         except KeyboardInterrupt:
