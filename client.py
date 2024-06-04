@@ -3,7 +3,6 @@ import socket
 import threading
 import json
 import time
-import tkinter as tk
 HEADER = 64
 PORT = 5050
 FORMAT = 'utf-8'
@@ -30,21 +29,6 @@ def start():
         client.send(DISCONNECT_MESSAGE.encode(FORMAT))
         connected = False
 
-    def gui():
-        if connected == True:
-            r = tk.Tk()
-            r.title('Client Menu')
-            button = tk.Button(r, text='Disconnect From Server', width=25, command=lambda: [disconnect(), r.destroy()])
-            button.pack()
-            r.mainloop()
-
-    def start_gui_thread():
-        gui_thread = threading.Thread(target=gui)
-        gui_thread.start()
-
-    # Start the GUI thread
-    if connected:
-        start_gui_thread()
     while connected:
 
         try:
@@ -73,4 +57,7 @@ def start():
             return 0
         except Exception as e:
             print(f"An error occurred: {e}")
+        except KeyboardInterrupt:
+            connected = False
+            disconnect()
 start()
