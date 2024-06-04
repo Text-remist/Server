@@ -1,5 +1,8 @@
 import socket
 import threading
+import json
+data =  '{ "name":"John", "age":30, "city":"New York"}'
+json_data = json.loads(data)
 HEADER = 64
 PORT = 5050
 SERVER = socket.gethostbyname(socket.gethostname())
@@ -9,22 +12,24 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
 
-
 def handle_client(conn, addr):
     print(f"[NEW CONNECTION] {addr} connected.")
+    print()
 
     connected = True
     while connected:
-        msg_length = conn.recv(HEADER).decode(FORMAT)
-        if msg_length:
-            msg_length = int(msg_length)
-            msg = conn.recv(msg_length).decode(FORMAT)
-            if msg == DISCONNECT_MESSAGE:
+            data = f"{json_data}"
+            conn.send(data.encode(FORMAT))
+            msg = conn.recv(40000).decode(FORMAT)
+            if msg != DISCONNECT_MESSAGE:
+            # Assuming msg includes both address and JSON data separated in some manner
+            # Example format: "{address} {json_string}"
+
+            # Parsing the received JSON message
+                data = json.loads(msg)
+            else:
+                print(f"[SERVER] {addr} has disconnected")
                 connected = False
-
-            print(f"[{addr}] {msg}")
-            conn.send("Msg received".encode(FORMAT))
-
     conn.close()
 
 def start():
@@ -32,6 +37,7 @@ def start():
     print(f"[LISTENING] Server is listening on {SERVER}")
     while True:
         conn, addr = server.accept()
+
         thread = threading.Thread(target=handle_client, args=(conn, addr))
         thread.start()
         print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
